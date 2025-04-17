@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+  namespace: school-system
+  labels:
+    app: server
+spec:
+  replicas: 3
+  selector:          # here selector defines which pods belongs to deployment
+    matchLabels:
+      app: server
+  template: # main part eidai bluerpint for pods has own metadata and spec section
+    metadata:
+      labels:                         # pods label field is required
+        app: server
+    spec:
+      containers:
+      - name: server-kube
+        image: nsshohag/web-server-without-dot-env-auth:1.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_USER
+          value: "sadat"
+        - name: DB_PASSWORD
+          value: "11235813"
+        - name: DB_NAME
+          value: "school_db"
+        - name: DB_HOST
+          #value: "postgres-service" ### host eikhane service er naaam hobe
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: postgres-url # postgres-service host ip here service ip
+        - name: DB_PORT
+          value: "5432"
+        - name: ValidAPIKey
+          valueFrom:
+            secretKeyRef:
+              name: auth-volume
+              key: secret.file  
+        
+        volumeMounts:
+        - name: auth-secret
+          mountPath: "/secret/sadat"
+          readOnly: true
+      volumes:
+      - name: auth-secret
+        secret:
+          secretName: auth-volume
+          items:
+          - key: secret.file
+            path: secret-file
+          
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-service
+  namespace: school-system
+spec:
+  type: ClusterIP
+  selector:
+    app: server
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080ge
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-service-node
+  namespace: school-system
+spec:
+  type: NodePort # eitar maddhome external service banai mane baire theke access kori
+  selector:     #in service this select pods to forward the requests to
+    app: server
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8080
+      nodePort: 30100 # nodeport must be within 30000-32767

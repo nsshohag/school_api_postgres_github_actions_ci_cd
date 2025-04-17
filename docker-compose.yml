@@ -1,0 +1,40 @@
+services:
+  school_server_compose:
+    image: nsshohag/web-server-without-dot-env:1.0
+    ports:
+      - "8080:8080"
+
+    environment:
+     - DB_USER=sadat
+     - DB_PASSWORD=11235813
+     - DB_NAME=school_db
+     - DB_HOST=postgres_compose
+     - DB_PORT=5432
+    container_name: server_compose
+    depends_on:
+      school_postgres_compose:
+       condition: service_healthy # Wait for the PostgreSQL container to be healthy
+    networks:
+      - one-network
+
+  school_postgres_compose:
+    image: postgres:latest
+    container_name: postgres_compose
+    ports:
+     - "5432:5432"
+    volumes:
+     - /home/sadat/Downloads/Go/school/postgres_data:/var/lib/postgresql/data
+    environment:
+     - POSTGRES_USER=sadat
+     - POSTGRES_PASSWORD=11235813  # Required password
+     - POSTGRES_DB=school_db
+    networks:
+     - one-network
+    healthcheck:  # Add a health check
+      test: ["CMD-SHELL", "pg_isready -U sadat"]  # Check if PostgreSQL is ready
+      interval: 5s  # Check every 5 seconds
+      timeout: 2s   # Timeout after 2 seconds
+      retries: 5    # Retry up to 5 times
+
+networks:
+    one-network:
