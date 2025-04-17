@@ -32,6 +32,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: nsshohag/web-server-without-dot-env-auth-ci:latest
+          tags: nsshohag/web-server-without-dot-env-auth-ci:latest-latest
 
     
